@@ -1,0 +1,22 @@
+.
+Note:,blue,after importing,,
+,green,after exporting,,
+,,,,
+,,,,
+report.pdf,,,,
+Code,,,,
+|------,SecurityFenceSystem,,,
+|,|---------------,passwordData.json,,
+|,|---------------,Data,,
+|,|,|--------------,A,2 random files
+|,|,|--------------,B,2 random files
+|,|,|--------------,C,2 random files
+|,|,|--------------,D,2 random files
+|,|,|--------------,E,2 random files
+|,|---------------,system.txt,,
+|,|---------------,adminPassword.json,,
+|------,function.py,,,
+|------,main.py,,,
+|------,MyData,,,
+,|---------------,myText.txt,,
+,|---------------,myDoc.docx,,

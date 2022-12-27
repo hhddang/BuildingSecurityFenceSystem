@@ -1,68 +1,25 @@
-import os
 from functions import * 
+import os
 
-file = {
-    'name': None,
-    'content': None,
-    'salt': None,
-    'hashedKey': None,
-}
+while (True):
+    os.system('cls')
+    print('1 - Import a file')
+    print('2 - Export a file')
+    print('3 - Import a folder')
+    print('4 - Export a folder')
+    choose = input('>> Choose: ')
 
-folder = {
-    'status': 'show',
-    'hashedKey': None,
-    'salt': None,
-}
+    if choose in ['1', '2', '3', '4']:
+        inputName = input('>> Input file / folder name: ')
 
-def run():
-    while(True):
-        os.system('cls')
-        print('0 - Exit')
-        print('1 - Choose a file')
-        print('2 - Choose a folder')
-        choose = input('>> ')
-        if choose == '0':
-            break
-        if choose == '1':
-            workOnFile()
-        if choose == '2':
-            workOnFolder()
-        else:
-            continue
+    if choose == '1':
+        importFile()
+    elif choose == '2':
+        exportFile()
+    elif choose == '3':
+        importFolder()
+    elif choose == '4':
+        exportFolder()
+    else: 
+        continue
 
-
-def workOnFile():
-    # Read file
-    # fileName = input('>>> Enter filename: ')
-    fileName='text.txt'
-    file['name'] = fileName
-    file['content'] = open(fileName, 'r').read()
-    database = json.load(open("database.json"))
-    if file['name'] not in database:
-        # Set a password
-        password = input(f'>>> Set a password on {fileName}: ')
-        encrypt(file, password, {})
-        splitFile(fileName)
-        
-    else:
-        print("File encrypted")
-
-    # View file content and change hashed key everytime password is entered
-    # while(True):
-    #     # os.system('cls')
-    #     reconstructFile(fileName)
-    #     inputPassword = input('>>> Input password to view content: ')
-    #     if checkPassword(file, inputPassword):
-    #         decrypt(file, inputPassword, {})
-    #         print('>>> File content: \n ' + file['content'])
-            
-    #     else:
-    #         print('>>> Incorrect password!')
-    #     input('>>> Enter to continue!')
-
-def workOnFolder():
-    pass
-
-#createFolders()
-workOnFile()
-# run()
