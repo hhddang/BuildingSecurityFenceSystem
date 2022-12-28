@@ -1,4 +1,4 @@
-from functions import importFile, exportFile, changeStatusTo
+from ObfuscatedFunctions import importFile, exportFile, changeStatusTo
 import os
 
 systemName = 'SecurityFenceSystem.7z'
