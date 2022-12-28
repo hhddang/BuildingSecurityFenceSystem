@@ -1,5 +1,8 @@
-from functions import * 
+from functions import importFile, exportFile, importFolder, exportFolder
 import os
+
+databaseName = 'database.json'
+choices = ['1', '2', '3', '4']
 
 while (True):
     os.system('cls')
@@ -7,19 +10,34 @@ while (True):
     print('2 - Export a file')
     print('3 - Import a folder')
     print('4 - Export a folder')
-    choose = input('>> Choose: ')
+    choice = input('>> Enter your choice as number: ')
 
-    if choose in ['1', '2', '3', '4']:
+    if choice in choices:
         inputName = input('>> Input file / folder name: ')
+        password = input('>> Enter password to import / export: ')
 
-    if choose == '1':
-        importFile()
-    elif choose == '2':
-        exportFile()
-    elif choose == '3':
-        importFolder()
-    elif choose == '4':
-        exportFolder()
+    if choice == '1':
+        print(f'\nIMPORTING FILE NAMED {inputName} WITH PASSWORD {password} IN PROCESS\n')
+        # importFile(inputName, password, databaseName)
+        pass
+    elif choice == '2':
+        print(f'\nEXPORTING FILE NAMED {inputName} WITH PASSWORD {password} IN PROCESS\n')
+        # exportFile(inputName, password, databaseName)
+        pass
+    elif choice == '3':
+        print(f'\nIMPORTING FOLDER NAMED {inputName} WITH PASSWORD {password} IN PROCESS\n')
+        # importFolder(inputName, password, databaseName)
+        pass
+    elif choice == '4':
+        print(f'\nEXPORTING FOLDER NAMED {inputName} WITH PASSWORD {password} IN PROCESS\n')
+        # exportFolder(inputName, password, databaseName)
+        pass
     else: 
         continue
+
+    if choice in choices:
+        print('Import / export successfully!')
+        input('Press any key to continue ...')
+
+
 
