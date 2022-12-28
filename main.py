@@ -1,37 +1,33 @@
-from functions import importFile, exportFile, importFolder, exportFolder
+from functions import importFile, exportFile, changeStatusTo
 import os
 
-databaseName = 'database.json'
-choices = ['1', '2', '3', '4']
+systemName = 'SecurityFenceSystem.7z'
+databaseName = 'SecurityFenceSystem/database.json'
+choices = ['1', '2']
+
+changeStatusTo('showed', systemName)
+
+systemPassword = input('>> Input system password: ')
 
 while (True):
     os.system('cls')
     print('1 - Import a file')
     print('2 - Export a file')
-    print('3 - Import a folder')
-    print('4 - Export a folder')
+    print('0 - Exit')
     choice = input('>> Enter your choice as number: ')
 
     if choice in choices:
-        inputName = input('>> Input file / folder name: ')
-        password = input('>> Enter password to import / export: ')
+        fileName = input('>> Input file name: ')
+        password = input('>> Enter file password: ')
 
     if choice == '1':
-        print(f'\nIMPORTING FILE NAMED {inputName} WITH PASSWORD {password} IN PROCESS\n')
-        # importFile(inputName, password, databaseName)
-        pass
+        print(f'\nIMPORTING FILE NAMED {fileName} WITH PASSWORD {password} IN PROCESS\n')
+        importFile(fileName, password, databaseName, systemPassword)
     elif choice == '2':
-        print(f'\nEXPORTING FILE NAMED {inputName} WITH PASSWORD {password} IN PROCESS\n')
-        # exportFile(inputName, password, databaseName)
-        pass
-    elif choice == '3':
-        print(f'\nIMPORTING FOLDER NAMED {inputName} WITH PASSWORD {password} IN PROCESS\n')
-        # importFolder(inputName, password, databaseName)
-        pass
-    elif choice == '4':
-        print(f'\nEXPORTING FOLDER NAMED {inputName} WITH PASSWORD {password} IN PROCESS\n')
-        # exportFolder(inputName, password, databaseName)
-        pass
+        print(f'\nEXPORTING FILE NAMED {fileName} WITH PASSWORD {password} IN PROCESS\n')
+        exportFile(fileName, password, databaseName, systemPassword)
+    elif choice == '0':
+        break
     else: 
         continue
 
@@ -39,5 +35,6 @@ while (True):
         print('Import / export successfully!')
         input('Press any key to continue ...')
 
+changeStatusTo('hidden', systemName)
 
 

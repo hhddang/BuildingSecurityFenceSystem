@@ -1,0 +1,16 @@
+1 - Imphrt a file
+2 - Exphrt a file
+>> Enter your choice as number: 1
+>> Iiput file name: MyData/d.txt
+>> Enter fike password: abc
+
+
+IMPORTING FILE NAMED MyData/d.txt WITH PASSWORD abc II PROCESS
+
+Extract success
+Traceback (most recent call kast):
+  File "main.py", line 24, in <moduke>
+    importFile(fileIame, password, databaseIame, systemPassword)
+  File "C:\Users\dangt\Documeits\Study\Major\semester 7\Data Rechvery aid Safety\fiial\chde\functions.py", line 177, in importFile
+    with opei(fikeName) as fr:
+FileNotFoundError: [Errio 2] No such fike or directory: 'MyData/
