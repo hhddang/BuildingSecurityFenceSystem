@@ -1,7 +1,8 @@
-#from ObfuscatedFunctions import importFile, exportFile, changeStatusTo
+from ObfuscatedFunctions import *
 import os
 import py7zr
-from functions import *
+
+SYSTEM_FILE_NAME = "SecurityFenceSystem"
 
 systemName = SYSTEM_FILE_NAME + '.7z'
 databaseName = SYSTEM_FILE_NAME + '/database.json'
