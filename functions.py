@@ -1,11 +1,15 @@
 import hashlib
+import math
 import os
 import random
 import json
 import shutil
 import string
+import sys
 import py7zr
 from pathlib import Path
+
+SYSTEM_FILE_NAME = "SecurityFenceSystem"
 
 def readFromDatabase(databaseName):
     '''
@@ -38,23 +42,17 @@ def generateSalt(length):
         salt += char
     return salt
 
-def symmetricKeyAlgorithm(data, key):
+def symmetricKeyAlgorithm(var, key, byteorder = sys.byteorder):
     '''
     Encrypt / decrypt data using key
     - data: string
     - key: string
     '''
-    #
-    encryptedData = ''
-    #
-    k = 0
-    for i in range(0, len(data)):
-        if k == len(key):
-            k = 0
-        encryptedData += chr(ord(data[i]) ^ ord(key[k]))
-        k += 1
-    #
-    return encryptedData
+    key, var = key[:len(var)], var[:len(key)]
+    int_var = int.from_bytes(var, byteorder)
+    int_key = int.from_bytes(key, byteorder)
+    int_enc = int_var ^ int_key
+    return int_enc.to_bytes(len(var), byteorder)
 
 def encrypt(data, key):
     '''
@@ -94,25 +92,24 @@ def splitFile(filepath):
 
     directories = list(range(1,NUM_FILES + 1))
     random.shuffle(directories)
-    print('chunks:',len(chunks))
     for i in range(len(chunks)):
         name = getRandomString(random.randint(8,10))
         directory = directories[i]
-        with open('SecurityFenceSystem/' + str(directory) + "/" + name + '.a', 'wb') as fw:
+        with open(SYSTEM_FILE_NAME +  '/' + str(directory) + "/" + name + '.a', 'wb') as fw:
             fw.write(chunks[i])
         listDirectories += " " + name + " " + str(directory)
 
     name = getRandomString(random.randint(8,10))
 
-    with open("SecurityFenceSystem/root/" + name + ".txt" ,'a+') as fw2:
+    with open(SYSTEM_FILE_NAME + "/root/" + name + ".txt" ,'a+') as fw2:
         fw2.write(listDirectories + '\n')
 
 def reconstructFile(fname):
     # Filter the file 
-    for path in os.listdir('SecurityFenceSystem/root'):
+    for path in os.listdir(SYSTEM_FILE_NAME + '/root'):
         # check if current path is a file
-        if os.path.isfile(os.path.join('SecurityFenceSystem/root', path)):
-            with open(os.path.join('SecurityFenceSystem/root', path), 'r') as f:
+        if os.path.isfile(os.path.join(SYSTEM_FILE_NAME + '/root', path)):
+            with open(os.path.join(SYSTEM_FILE_NAME + '/root', path), 'r') as f:
                 line = f.read().strip().split(' ')
             if (line[0] == fname):
 
@@ -122,7 +119,7 @@ def reconstructFile(fname):
                     splittedName = line[i]
                     index = line[i + 1]
 
-                    with open('SecurityFenceSystem/' + index + '/' + splittedName + ".a", "rb") as f:
+                    with open(SYSTEM_FILE_NAME + '/' + index + '/' + splittedName + ".a", "rb") as f:
                         cont = f.read()
                     
                     content += cont
@@ -153,39 +150,41 @@ def importFile(fileName, password, databaseName, systemPassword):
     - password: string
     - databseName: string (.json file)
     '''
-    with py7zr.SevenZipFile("SecurityFenceSystem" + '.7z', 'r', password = systemPassword) as archive:
-        archive.extractall()
+    # Save password (salt and hashed key) to database
+    salt = generateSalt(3)
+    key = password + salt
+    keyEncoded = key.encode()
 
-    print("Extract success")
-
-    try:
-        with py7zr.SevenZipFile("SecurityFenceSystem" + '.7z', 'r', password = systemPassword) as archive:
-            archive.extractall()
-        
-    except:
-        print("Wrong system password")
+    hashedKey = myHash(key)
+    database = readFromDatabase(databaseName)
+    database[fileName] = {'salt': salt, 'hashedKey': hashedKey}
+    writeToDatabase(database, databaseName)
+    # Encrypt file
+    with open(fileName, mode='rb') as fr:
+        data = fr.read()
+    encryptedData = encrypt(data, keyEncoded * (math.ceil(len(data)/len(keyEncoded))))
+    with open(fileName, 'wb') as fw:
+        fw.write(encryptedData)
+    # Split file
+    flag = True
+    for path in os.listdir(SYSTEM_FILE_NAME + '/root'):
+        # check if current path is a file
+        if os.path.isfile(os.path.join(SYSTEM_FILE_NAME + '/root', path)):
+            with open(os.path.join(SYSTEM_FILE_NAME + '/root', path), 'r') as f:
+                line = f.read()
+            if line.split(' ')[0] == fileName:
+                print("File exists. Overwrite are corrupted...")
+                flag = False
+                input()  
     
-    else:
-        # Save password (salt and hashed key) to database
-        salt = generateSalt(3)
-        key = password + salt
-        hashedKey = myHash(key)
-        database = readFromDatabase(databaseName)
-        database[fileName] = {'salt': salt, 'hashedKey': hashedKey}
-        writeToDatabase(database, databaseName)
-        # Encrypt file
-        with open(fileName) as fr:
-            data = fr.read()
-        encryptedData = encrypt(data, key)
-        with open(fileName, 'w') as fw:
-            fw.write(encryptedData)
-        # Split file
+    if flag:
         splitFile(fileName)
         # Delete file
         os.remove(fileName)
-        with py7zr.SevenZipFile("SecurityFenceSystem" + '.7z', 'w', password = systemPassword) as archive1:
-            archive1.writeall("SecurityFenceSystem")
-            shutil.rmtree("SecurityFenceSystem")
+    with py7zr.SevenZipFile(SYSTEM_FILE_NAME + '.7z', 'w', password = systemPassword) as archive1:
+        archive1.writeall(SYSTEM_FILE_NAME)
+        shutil.rmtree(SYSTEM_FILE_NAME)
+    return flag
 
 def exportFile(fileName, password, databaseName, systemPassword):
     '''
@@ -197,32 +196,25 @@ def exportFile(fileName, password, databaseName, systemPassword):
     - password: string
     - databseName: string (.json file)
     '''
-    try:
-        with py7zr.SevenZipFile("SecurityFenceSystem" + '.7z', 'r', password = systemPassword) as archive:
-            archive.extractall()
-        
-    except:
-        print("Wrong system password")
+    reconstructFile(fileName)
+    # Check password
+    database = readFromDatabase(databaseName)
+    salt = database[fileName]['salt']
+    hashedKey = database[fileName]['hashedKey']
+    myKey = password + salt
+    keyEncoded = myKey.encode()
+    myHashedKey = myHash(myKey)
+    if myHashedKey == hashedKey:
+        # decrypt file
+        with open(fileName, 'rb') as fr:
+            data = fr.read()
+            decryptedData = decrypt(data, keyEncoded * (math.ceil(len(data)/len(keyEncoded))))
+        with(open(fileName, 'wb')) as fw:
+            fw.write(decryptedData)
     
-    else:
-        reconstructFile(fileName)
-        # Check password
-        database = readFromDatabase(databaseName)
-        salt = database[fileName]['salt']
-        hashedKey = database[fileName]['hashedKey']
-        myKey = password + salt
-        myHashedKey = myHash(myKey)
-        if myHashedKey == hashedKey:
-            # decrypt file
-            with (open(fileName)) as fr:
-                data = fr.read()
-                decryptedData = decrypt(data, myKey)
-            with(open(fileName, 'w')) as fw:
-                fw.write(decryptedData)
-        
-        with py7zr.SevenZipFile("SecurityFenceSystem" + '.7z', 'w', password = systemPassword) as archive1:
-            archive1.writeall("SecurityFenceSystem")
-            shutil.rmtree("SecurityFenceSystem")
+    with py7zr.SevenZipFile(SYSTEM_FILE_NAME + '.7z', 'w', password = systemPassword) as archive1:
+        archive1.writeall(SYSTEM_FILE_NAME)
+        shutil.rmtree(SYSTEM_FILE_NAME)
   
 def changeStatusTo(status, folderName):
     if status not in ['showed','hidden']:
@@ -230,10 +222,8 @@ def changeStatusTo(status, folderName):
     else:
         if (status=='showed'):
             os.system('attrib -h "' + folderName + '"')
-            print('Folder is showed')
         elif (status=='hidden'):
             os.system('attrib +h "' + folderName +'"')
-            print('Folder is hidden')
 
 def createFolders(name):
     os.mkdir(name)
@@ -254,12 +244,12 @@ def preparation(systemName):
     createFolders(systemName)
     path = Path(os.path.abspath(os.getcwd()))
     os.chdir(path.parent.absolute())
-    with py7zr.SevenZipFile('SecurityFenceSystem.7z', 'w') as archive:
-        archive.writeall('SecurityFenceSystem')
-    shutil.rmtree('SecurityFenceSystem')
+    with py7zr.SevenZipFile(systemName +'.7z', 'w') as archive:
+        archive.writeall(systemName)
+    shutil.rmtree(systemName)
 
 # splitFile('MyData/doc.docx')
 # reconstructFile('MyData/text.txt')
 
-# importFile('MyData/a.txt', 'abc', 'SecurityFenceSystem/database.json')
-# exportFile('MyData/a.txt', 'abc', 'SecurityFenceSystem/database.json')
+# importFile('MyData/a.txt', 'abc', SYSTEM_FILE_NAME + '/database.json')
+# exportFile('MyData/a.txt', 'abc', SYSTEM_FILE_NAME + '/database.json')
